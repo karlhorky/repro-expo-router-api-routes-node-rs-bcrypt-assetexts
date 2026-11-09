@@ -10,7 +10,9 @@
     "build-addon": "node-gyp rebuild --directory native",
     "diagnose": "node scripts/diagnose.mjs",
     "start-native-external": "NATIVE_EXTERNAL_TEST=1 expo start --localhost --port 8107",
-    "check-native-external": "node scripts/check-native-external.mjs"
+    "check-native-external": "node scripts/check-native-external.mjs",
+    "start-workaround": "NATIVE_TRANSFORMER_WORKAROUND=1 expo start --localhost --port 8107",
+    "check-workaround": "node scripts/check-native-external.mjs"
   },
   "dependencies": {
     "@node-rs/bcrypt-darwin-arm64": "2.0.0",

@@ -1,0 +1,22 @@
+$ NATIVE_TRANSFORMER_WORKAROUND=1 expo start --localhost --port 8107
+Starting project at <repro>
+Starting Metro Bundler
+
+Waiting on http://localhost:8107
+
+Logs for your project will appear below.
+| (node:47405) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+| (Use `node --trace-warnings ...` to show where the warning was created)
+| (node:47405) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+| (Use `node --trace-warnings ...` to show where the warning was created)
+| (node:47405) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+| (Use `node --trace-warnings ...` to show where the warning was created)
+| (node:47405) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+| (Use `node --trace-warnings ...` to show where the warning was created)
+| (node:47405) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+| (Use `node --trace-warnings ...` to show where the warning was created)
+| (node:47405) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+| (Use `node --trace-warnings ...` to show where the warning was created)
+λ Bundled 99ms app/hello+api.js (1 module)
+λ Bundled 15ms app/node-rs+api.js (1 module)
+λ Bundled 11ms app/hello-commonjs+api.js (1 module)

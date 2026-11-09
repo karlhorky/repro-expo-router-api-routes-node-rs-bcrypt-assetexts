@@ -164,7 +164,33 @@ $ pnpm control
 {"module":"hello.node","message":"hello from native"}
 ```
 
+## Generalized workaround
+
+To load `.node` files without listing addon names or filenames, stop the default server and run:
+
+```sh
+pnpm start-workaround
+```
+
+In another terminal, repeat the API requests:
+
+```sh
+curl --include http://localhost:8107/hello
+curl --include http://localhost:8107/node-rs
+curl --include http://localhost:8107/hello-commonjs
+```
+
+Expected: HTTP 200 with `{"message":"hello from native"}` for `/hello` and `/hello-commonjs`, and a bcrypt hash for `/node-rs`.
+
+`pnpm check-workaround` runs these requests and checks the responses. The recorded responses are in [logs/workaround.txt](logs/workaround.txt), and the server output is in [logs/workaround-metro.txt](logs/workaround-metro.txt).
+
+[metro.native-transformer.config.cjs](metro.native-transformer.config.cjs) adds `node` to `sourceExts` and selects [metro.native-transformer.cjs](metro.native-transformer.cjs). For `.node` files imported by the server, the transformer generates JavaScript that loads the binary through Node.js `createRequire()`. Other files use Expo's default transformer. The API Routes keep their original imports.
+
+The generated JavaScript contains the binary's absolute filename. The [standalone workaround comment](https://github.com/react/metro/issues/1377#issuecomment-6752109085) includes the code to copy into another project.
+
 ## Resolver experiment
+
+This is the resolver approach used in [Expo draft PR #53246](https://github.com/expo/expo/pull/53246).
 
 Expo CLI's `requestNodeExternals()` handles Node.js built-in modules by generating a call to `$$require_external()`. Its `isNodeExternal()` filter only matches `NODE_STDLIB_MODULES`. These native addons do not match, and Metro resolves them as `assetFiles` instead.
 
@@ -186,7 +212,7 @@ pnpm check-native-external
 
 [logs/native-external.txt](logs/native-external.txt) records the successful responses. [logs/native-external-metro.txt](logs/native-external-metro.txt) records the original `assetFiles` resolutions and replacement with Node.js loading.
 
-The default `pnpm start` retains the failing `assetExts` configuration. The experiment is enabled only by `NATIVE_EXTERNAL_TEST=1`. It uses Expo CLI's internal `$$require_external()` mechanism and absolute paths, and has only been tested in development. It does not establish a production solution.
+The default `pnpm start` retains the failing `assetExts` configuration. The resolver experiment is enabled only by `NATIVE_EXTERNAL_TEST=1`, separately from the generalized transformer workaround. It uses Expo CLI's internal `$$require_external()` mechanism and absolute paths, and has only been tested in development. It does not establish a production solution.
 
 ## Tested environment and limits
 
