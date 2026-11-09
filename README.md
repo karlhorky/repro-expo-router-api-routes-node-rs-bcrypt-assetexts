@@ -1,4 +1,4 @@
-# Native bcrypt imports in Expo Router API Routes with `assetExts`
+# Native addon imports in Expo Router API Routes with `assetExts`
 
 Reproduction for https://github.com/react/metro/issues/1377#issuecomment-2440121091
 
@@ -6,12 +6,13 @@ Adding `node` to Metro's `resolver.assetExts` allows the direct native addon imp
 
 ## Steps to reproduce
 
-Requires macOS on Apple Silicon. The direct `@node-rs/bcrypt-darwin-arm64` dependency intentionally matches the package in the original issue.
+Requires macOS on Apple Silicon, Python, and Xcode Command Line Tools (for the tiny C addon). The direct `@node-rs/bcrypt-darwin-arm64` dependency intentionally matches the package in the original issue.
 
 ```sh
 git clone https://github.com/karlhorky/repro-expo-router-api-routes-node-rs-bcrypt-assetexts.git
 cd repro-expo-router-api-routes-node-rs-bcrypt-assetexts
 pnpm install --frozen-lockfile
+pnpm build-addon
 pnpm control
 pnpm start
 ```
@@ -38,13 +39,15 @@ module.exports = config;
 
 ## Expected and observed results
 
-Expected: both hashing routes return HTTP 200 with a bcrypt hash. Observed:
+Expected: both hashing routes return HTTP 200 with a bcrypt hash, and `/hello` returns HTTP 200 with `{"message":"hello from native"}`. Observed:
 
 | Request | HTTP status | Failure location |
 | --- | --- | --- |
 | `/node-rs` | 500 | Handler calls the missing `hashSync` export |
 | `/node-rs-asset` | 200 | Diagnostic route returns the imported asset URL |
 | `/bcrypt` | 500 | Module initialization in `node-gyp-build`, before the handler runs |
+| `/hello` | 500 | Handler calls the missing `hello` export |
+| `/hello-asset` | 200 | Diagnostic route returns the imported asset URL |
 
 The assertions in `scripts/check.mjs` check these observed failures. A passing check reproduces the problem, rather than indicating native addon support works.
 
@@ -97,14 +100,37 @@ const bindings = require('node-gyp-build')(path.resolve(__dirname));
 
 The observed search directory is `<repro>/app`, rather than the installed `bcrypt` package directory containing `prebuilds/darwin-arm64/bcrypt.node`. The loader throws at `node-gyp-build/node-gyp-build.js:60`. This is a different failure from the asset URL returned by the direct native import.
 
+### Tiny Node-API addon with no package loader
+
+`native/hello.c` exports one function, `hello()`, which returns `"hello from native"`. `pnpm build-addon` compiles it with `node-gyp`. The route imports `native/build/Release/hello.node` directly, with no bcrypt dependency or third-party native loader in this import path.
+
+`app/hello+api.js` bundles, then fails at line 4 when the handler calls `hello`:
+
+```text
+Metro error: (0 , _nativeBuildReleaseHelloNode.hello) is not a function
+
+Call Stack
+  GET (app/hello+api.js:4:40)
+```
+
+The diagnostic route confirms the same asset URL behavior:
+
+```sh
+$ curl --silent http://localhost:8107/hello-asset
+{"type":"string","value":"/assets/?unstable_path=.%2Fnative%2Fbuild%2FRelease/hello.node"}
+```
+
+Node's `require()` loads this exact binary and `hello()` returns `"hello from native"`, as shown in the controls below. The generated binary is ignored by Git, so the repro builds it locally.
+
 ### Node controls
 
 The same installed native addons hash and verify successfully when loaded with Node's `require()`:
 
 ```sh
 $ pnpm control
-{"module":"@node-rs/bcrypt-darwin-arm64","hash":"$2b$04$gWzENuiXY.1JNUp/RozmGe3q4AeEgtf4/wU2TYHSxMxWZZB0I6XSi","verified":true}
-{"module":"bcrypt","hash":"$2b$04$8CjTX1yWD1dQElfLqVpPhuYz8eAayh2TxscbRJjdmDOiSfIPxO5bq","verified":true}
+{"module":"@node-rs/bcrypt-darwin-arm64","hash":"$2b$04$oEuWKjZaVFCboXz7iMU27.djFgZY9V2b4b3VdhONdfQQBGto.pi6y","verified":true}
+{"module":"bcrypt","hash":"$2b$04$fdGiHwuk0LTs8Q/mufYtveFWYs/8FSVvlX4.RvnUTWkky37i53NKG","verified":true}
+{"module":"hello.node","message":"hello from native"}
 ```
 
 The HTTP check output is saved in [logs/check.txt](logs/check.txt). [logs/metro.txt](logs/metro.txt) contains the captured Metro output, with ANSI colors removed and the absolute repro directory replaced by `<repro>`.
@@ -122,5 +148,6 @@ The HTTP check output is saved in [logs/check.txt](logs/check.txt). [logs/metro.
 - `@node-rs/bcrypt-darwin-arm64` 2.0.0
 - `bcrypt` 6.0.0
 - `node-gyp-build` 4.8.4
+- `node-gyp` 13.1.0 (builds the tiny addon)
 
 Tested with `expo start` and local HTTP requests. Production export and other operating systems have not been tested. The lockfile records the full dependency versions.

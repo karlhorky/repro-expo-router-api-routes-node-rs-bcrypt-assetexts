@@ -1,2 +1,3 @@
-{"module":"@node-rs/bcrypt-darwin-arm64","hash":"$2b$04$gWzENuiXY.1JNUp/RozmGe3q4AeEgtf4/wU2TYHSxMxWZZB0I6XSi","verified":true}
-{"module":"bcrypt","hash":"$2b$04$8CjTX1yWD1dQElfLqVpPhuYz8eAayh2TxscbRJjdmDOiSfIPxO5bq","verified":true}
+{"module":"@node-rs/bcrypt-darwin-arm64","hash":"$2b$04$oEuWKjZaVFCboXz7iMU27.djFgZY9V2b4b3VdhONdfQQBGto.pi6y","verified":true}
+{"module":"bcrypt","hash":"$2b$04$fdGiHwuk0LTs8Q/mufYtveFWYs/8FSVvlX4.RvnUTWkky37i53NKG","verified":true}
+{"module":"hello.node","message":"hello from native"}

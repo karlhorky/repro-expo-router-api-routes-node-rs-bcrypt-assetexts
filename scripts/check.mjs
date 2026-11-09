@@ -19,3 +19,17 @@ const bcryptBody = await bcryptResponse.text();
 assert.equal(bcryptResponse.status, 500);
 assert.ok(bcryptBody.includes('No native build was found'));
 console.log('/bcrypt: HTTP 500, No native build was found');
+
+const helloResponse = await fetch('http://localhost:8107/hello');
+const helloBody = await helloResponse.text();
+assert.equal(helloResponse.status, 500);
+assert.ok(helloBody.includes('hello') && helloBody.includes('is not a function'));
+console.log('/hello: HTTP 500, hello is not a function');
+
+const helloAssetResponse = await fetch('http://localhost:8107/hello-asset');
+assert.equal(helloAssetResponse.status, 200);
+const helloAsset = await helloAssetResponse.json();
+assert.equal(helloAsset.type, 'string');
+assert.ok(helloAsset.value.startsWith('/assets/'));
+assert.ok(helloAsset.value.endsWith('/hello.node'));
+console.log('/hello-asset: HTTP 200, ' + JSON.stringify(helloAsset));

@@ -6,3 +6,6 @@ console.log(JSON.stringify({ module: '@node-rs/bcrypt-darwin-arm64', hash: nativ
 
 const bcryptHash = bcrypt.hashSync('hello world', 4);
 console.log(JSON.stringify({ module: 'bcrypt', hash: bcryptHash, verified: bcrypt.compareSync('hello world', bcryptHash) }));
+
+const hello = require('../native/build/Release/hello.node');
+console.log(JSON.stringify({ module: 'hello.node', message: hello.hello() }));
