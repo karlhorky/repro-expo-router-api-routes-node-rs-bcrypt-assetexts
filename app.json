@@ -1,0 +1,12 @@
+{
+  "expo": {
+    "name": "Native bcrypt assetExts repro",
+    "slug": "repro-expo-router-api-routes-node-rs-bcrypt-assetexts",
+    "web": {
+      "output": "server"
+    },
+    "plugins": [
+      "expo-router"
+    ]
+  }
+}

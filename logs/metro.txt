@@ -1,0 +1,58 @@
+$ expo start --localhost --port 8107
+Starting project at <repro>
+Starting Metro Bundler
+
+Waiting on http://localhost:8107
+
+Logs for your project will appear below.
+| (node:34952) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+| (Use `node --trace-warnings ...` to show where the warning was created)
+| (node:34952) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+| (Use `node --trace-warnings ...` to show where the warning was created)
+| (node:34952) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+| (Use `node --trace-warnings ...` to show where the warning was created)
+| (node:34952) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+| (Use `node --trace-warnings ...` to show where the warning was created)
+| (node:34952) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+| (Use `node --trace-warnings ...` to show where the warning was created)
+| (node:34952) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+| (Use `node --trace-warnings ...` to show where the warning was created)
+λ Bundled 119ms app/node-rs+api.js (2 modules)
+
+Metro error: (0 , _nodeRsBcryptDarwinArm.hashSync) is not a function
+
+Code: node-rs+api.js
+  2 |
+  3 | export function GET() {
+> 4 |   const hash = hashSync('hello world', 4, undefined, undefined, false);
+    |                        ^
+  5 |   return Response.json({ hash });
+  6 | }
+  7 |
+Call Stack
+  GET (app/node-rs+api.js:4:24)
+  respondAPI (node_modules/.pnpm/expo-server@58.0.6/node_modules/expo-server/build/cjs/vendor/abstract.js:245:32)
+  requestHandler (node_modules/.pnpm/expo-server@58.0.6/node_modules/expo-server/build/cjs/vendor/abstract.js:132:26)
+  async (node_modules/.pnpm/expo-server@58.0.6/node_modules/expo-server/build/cjs/runtime/index.js:70:56)
+  async requestHandler (node_modules/.pnpm/expo-server@58.0.6/node_modules/expo-server/build/cjs/vendor/http.js:56:20)
+  async (node_modules/.pnpm/expo-server@58.0.6/node_modules/expo-server/build/cjs/vendor/http.js:75:30)
+λ Bundled 71ms app/bcrypt+api.js (1 module)
+
+Metro error: No native build was found for platform=darwin arch=arm64 runtime=node abi=137 uv=1 armv=8 libc=glibc node=24.13.0
+    loaded from: <repro>/app
+
+
+Code: node-gyp-build.js
+  58 |   ].filter(Boolean).join(' ')
+  59 |
+> 60 |   throw new Error('No native build was found for ' + target + '\n    loaded from: ' + dir + '\n')
+     |         ^
+  61 |
+  62 |   function resolve (dir) {
+  63 |     // Find matching "prebuilds/<platform>-<arch>" directory
+Call Stack
+  load.resolve [as path] (node_modules/.pnpm/node-gyp-build@4.8.4/node_modules/node-gyp-build/node-gyp-build.js:60:9)
+  load (node_modules/.pnpm/node-gyp-build@4.8.4/node_modules/node-gyp-build/node-gyp-build.js:22:30)
+  <unknown> (node_modules/.pnpm/bcrypt@6.0.0/node_modules/bcrypt/bcrypt.js:2:43)
+  <unknown> (app/bcrypt+api.js:1)
+λ Bundled 8ms app/node-rs-asset+api.js (1 module)

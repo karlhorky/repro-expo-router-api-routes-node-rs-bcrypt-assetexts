@@ -1,0 +1,2 @@
+{"module":"@node-rs/bcrypt-darwin-arm64","hash":"$2b$04$gWzENuiXY.1JNUp/RozmGe3q4AeEgtf4/wU2TYHSxMxWZZB0I6XSi","verified":true}
+{"module":"bcrypt","hash":"$2b$04$8CjTX1yWD1dQElfLqVpPhuYz8eAayh2TxscbRJjdmDOiSfIPxO5bq","verified":true}
