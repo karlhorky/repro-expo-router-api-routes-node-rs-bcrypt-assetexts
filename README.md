@@ -2,11 +2,11 @@
 
 Reproduction for https://github.com/react/metro/issues/1377#issuecomment-2440121091
 
-Adding `node` to Metro's `resolver.assetExts` allows the direct native addon import to bundle, but imports an asset URL instead of loading the Node-API addon. `bcrypt` fails differently: its bundled native loader searches the API route directory for the binary.
+Adding `node` to Metro's `resolver.assetExts` makes native addon imports bundle, but Expo's asset transformer exports a URL string instead of loading the Node-API addon. This repro tests a tiny `hello.node` addon and the direct `@node-rs/bcrypt-darwin-arm64` package from the original issue.
 
-## Steps to reproduce
+## Reproduce
 
-Requires macOS on Apple Silicon, Python, and Xcode Command Line Tools (for the tiny C addon). The direct `@node-rs/bcrypt-darwin-arm64` dependency intentionally matches the package in the original issue.
+Requires macOS on Apple Silicon, Python, and Xcode Command Line Tools. The platform-specific bcrypt dependency intentionally matches the original issue. No database, credentials, device, or mobile build is needed.
 
 ```sh
 git clone https://github.com/karlhorky/repro-expo-router-api-routes-node-rs-bcrypt-assetexts.git
@@ -21,11 +21,12 @@ In another terminal:
 
 ```sh
 pnpm check
+pnpm diagnose
 ```
 
-`pnpm-workspace.yaml` allows `bcrypt`'s install script. No database, credentials, device, or mobile build is needed.
+`pnpm check` asserts the observed failures, so passing means the problem was reproduced. `pnpm diagnose` captures the generated native asset module, compares the served and local binary hashes, invokes Expo's asset transformer directly, and verifies native loading inside the Expo API server.
 
-The configuration under test is:
+Configuration under test:
 
 ```js
 const { getDefaultConfig } = require('expo/metro-config');
@@ -37,117 +38,105 @@ config.resolver.assetExts.push('node');
 module.exports = config;
 ```
 
+`node` is in `assetExts`, not `sourceExts`.
+
 ## Expected and observed results
 
-Expected: both hashing routes return HTTP 200 with a bcrypt hash, and `/hello` returns HTTP 200 with `{"message":"hello from native"}`. Observed:
+Expected: `/hello` returns `{"message":"hello from native"}` and `/node-rs` returns a bcrypt hash, both with HTTP 200. Both routes bundle, then fail when their handlers call the imported native function:
 
-| Request | HTTP status | Failure location |
+| Request | HTTP status | Observed result |
 | --- | --- | --- |
-| `/node-rs` | 500 | Handler calls the missing `hashSync` export |
-| `/node-rs-asset` | 200 | Diagnostic route returns the imported asset URL |
-| `/bcrypt` | 500 | Module initialization in `node-gyp-build`, before the handler runs |
-| `/hello` | 500 | Handler calls the missing `hello` export |
-| `/hello-asset` | 200 | Diagnostic route returns the imported asset URL |
+| `/hello` | 500 | `hello` is not a function |
+| `/hello-asset` | 200 | Imported default value is a string asset URL |
+| `/node-rs` | 500 | `hashSync` is not a function |
+| `/node-rs-asset` | 200 | Imported default value is a string asset URL |
+| `/native-require` | 200 | Both addons load and execute using Node's `createRequire()` |
 
-The assertions in `scripts/check.mjs` check these observed failures. A passing check reproduces the problem, rather than indicating native addon support works.
-
-### Direct `@node-rs/bcrypt-darwin-arm64@2.0.0` import
-
-`app/node-rs+api.js` bundles, then fails at line 4 when `GET()` calls `hashSync`:
-
-```text
-λ Bundled 119ms app/node-rs+api.js (2 modules)
-
-Metro error: (0 , _nodeRsBcryptDarwinArm.hashSync) is not a function
-
-Call Stack
-  GET (app/node-rs+api.js:4:24)
-```
-
-`app/node-rs-asset+api.js` inspects the imported default value:
-
-```sh
-$ curl --silent http://localhost:8107/node-rs-asset
-{"type":"string","value":"/assets/?unstable_path=.%2Fnode_modules%2F.pnpm%2F%40node-rs%2Bbcrypt-darwin-arm64%402.0.0%2Fnode_modules%2F%40node-rs%2Fbcrypt-darwin-arm64/bcrypt.darwin-arm64.node"}
-```
-
-The import resolves to a string URL, so it has no `hashSync` export. Metro does not attempt to parse the binary as JavaScript, but it also does not load it as a Node-API addon.
-
-The direct binary's v2 `hashSync` call includes the native binding arguments used by the Node control. The same arguments succeed outside Metro.
-
-### `bcrypt@6.0.0` comparison
-
-`app/bcrypt+api.js` also bundles, but importing `bcrypt` fails before `GET()` executes:
-
-```text
-λ Bundled 71ms app/bcrypt+api.js (1 module)
-
-Metro error: No native build was found for platform=darwin arch=arm64 runtime=node abi=137 uv=1 armv=8 libc=glibc node=24.13.0
-    loaded from: <repro>/app
-
-Call Stack
-  load.resolve [as path] (node_modules/.pnpm/node-gyp-build@4.8.4/node_modules/node-gyp-build/node-gyp-build.js:60:9)
-  load (node_modules/.pnpm/node-gyp-build@4.8.4/node_modules/node-gyp-build/node-gyp-build.js:22:30)
-  <unknown> (node_modules/.pnpm/bcrypt@6.0.0/node_modules/bcrypt/bcrypt.js:2:43)
-  <unknown> (app/bcrypt+api.js:1)
-```
-
-`bcrypt/bcrypt.js:2` calls:
-
-```js
-const bindings = require('node-gyp-build')(path.resolve(__dirname));
-```
-
-The observed search directory is `<repro>/app`, rather than the installed `bcrypt` package directory containing `prebuilds/darwin-arm64/bcrypt.node`. The loader throws at `node-gyp-build/node-gyp-build.js:60`. This is a different failure from the asset URL returned by the direct native import.
-
-### Tiny Node-API addon with no package loader
-
-`native/hello.c` exports one function, `hello()`, which returns `"hello from native"`. `pnpm build-addon` compiles it with `node-gyp`. The route imports `native/build/Release/hello.node` directly, with no bcrypt dependency or third-party native loader in this import path.
-
-`app/hello+api.js` bundles, then fails at line 4 when the handler calls `hello`:
+The exact handler errors are:
 
 ```text
 Metro error: (0 , _nativeBuildReleaseHelloNode.hello) is not a function
-
-Call Stack
   GET (app/hello+api.js:4:40)
+
+Metro error: (0 , _nodeRsBcryptDarwinArm.hashSync) is not a function
+  GET (app/node-rs+api.js:4:24)
 ```
 
-The diagnostic route confirms the same asset URL behavior:
+[logs/check.txt](logs/check.txt) records the HTTP assertions. [logs/metro.txt](logs/metro.txt) records the Metro output, with ANSI colors removed and the absolute repro directory replaced by `<repro>`.
 
-```sh
-$ curl --silent http://localhost:8107/hello-asset
+## Diagnostics
+
+### 1. The binary becomes a URL during asset transformation
+
+`native/hello.c` exports one function, `hello()`, returning `"hello from native"`. It has no bcrypt dependency or third-party native loader. `pnpm build-addon` compiles it locally with `node-gyp`, and `app/hello+api.js` imports `native/build/Release/hello.node` directly.
+
+`pnpm diagnose` requests this Metro bundle with the Node environment explicitly selected:
+
+```text
+http://localhost:8107/app/hello+api.bundle?platform=web&dev=true&minify=false&transform.environment=node&transform.engine=hermes
+```
+
+The generated module contains a string export, with no native loading call:
+
+```js
+__d(function (global, require, _$$_IMPORT_DEFAULT, _$$_IMPORT_ALL, module, exports, _dependencyMap) {
+  "use strict";
+
+  module.exports = "/assets/?unstable_path=.%2Fnative%2Fbuild%2FRelease/hello.node";
+},4,[],"native/build/Release/hello.node");
+```
+
+The complete extracted module is in [logs/hello-generated-module.txt](logs/hello-generated-module.txt).
+
+### 2. The asset URL serves the original binary
+
+The diagnostic route returns:
+
+```json
 {"type":"string","value":"/assets/?unstable_path=.%2Fnative%2Fbuild%2FRelease/hello.node"}
 ```
 
-Node's `require()` loads this exact binary and `hello()` returns `"hello from native"`, as shown in the controls below. The generated binary is ignored by Git, so the repro builds it locally.
+`pnpm diagnose` fetches that URL, asserts HTTP 200, and asserts its SHA-256 matches `native/build/Release/hello.node`. The observed hashes and responses are in [logs/diagnose.txt](logs/diagnose.txt). The binary is available, but importing it produces the URL rather than its exports.
 
-### Node controls
+### 3. Expo's asset transformer returns this exact export for the Node environment
 
-The same installed native addons hash and verify successfully when loaded with Node's `require()`:
+The script directly invokes the installed `@expo/metro-config@58.0.20` function `transformToSource()` with `platform: 'web'`, `customTransformOptions: { environment: 'node' }`, and the dev server's `publicPath: '/assets/?unstable_path=.'`. Its returned code matches the generated module's export exactly.
+
+In `build/transform-worker/asset-transformer.js`, line 72 sets `isServerEnv` for the Node environment. Line 86 enters `if (isServerEnv || options.platform === 'web')`. For this binary without image dimensions, line 107 returns:
+
+```js
+code: `module.exports = ${JSON.stringify(assetPath)};`
+```
+
+[logs/transformer-source.txt](logs/transformer-source.txt) records installed source lines 60-111 with original line numbers. `pnpm diagnose` regenerates the excerpt from the installed package.
+
+### 4. Node can load both addons inside the same API server
+
+`app/native-require+api.js` creates a Node `require` rooted at the repro's `package.json`:
+
+```js
+const nodeRequire = createRequire(`${process.cwd()}/package.json`);
+const hello = nodeRequire('./native/build/Release/hello.node');
+const bcrypt = nodeRequire('@node-rs/bcrypt-darwin-arm64');
+```
+
+This route returns HTTP 200 with `"message":"hello from native"`, a bcrypt hash, and `"verified":true`. This isolates the static asset transformation from native addon support in the server process. `process.cwd()` assumes this development server was started from the repo root. This is a diagnostic control, not a verified deployment configuration.
+
+The standalone Node controls also pass:
 
 ```sh
 $ pnpm control
-{"module":"@node-rs/bcrypt-darwin-arm64","hash":"$2b$04$oEuWKjZaVFCboXz7iMU27.djFgZY9V2b4b3VdhONdfQQBGto.pi6y","verified":true}
-{"module":"bcrypt","hash":"$2b$04$fdGiHwuk0LTs8Q/mufYtveFWYs/8FSVvlX4.RvnUTWkky37i53NKG","verified":true}
+{"module":"@node-rs/bcrypt-darwin-arm64","hash":"$2b$04$MxJT7lealAE29idH8X8oReztkvdpA9OfZdQGI336rXJ2SASwUfTr.","verified":true}
 {"module":"hello.node","message":"hello from native"}
 ```
 
-The HTTP check output is saved in [logs/check.txt](logs/check.txt). [logs/metro.txt](logs/metro.txt) contains the captured Metro output, with ANSI colors removed and the absolute repro directory replaced by `<repro>`.
-
-## Tested environment
+## Tested environment and limits
 
 - macOS 27.2, Apple Silicon (`darwin arm64`)
-- Node.js 24.13.0
-- pnpm 12.6.0 (pinned in `package.json`)
-- Expo 58.0.17
-- Expo Router 58.0.25
-- `@expo/cli` 58.1.18
-- `@expo/metro-config` 58.0.20
-- Metro 0.87.1
+- Node.js 24.13.0, pnpm 12.6.0
+- Expo 58.0.17, Expo Router 58.0.25
+- `@expo/cli` 58.1.18, `@expo/metro-config` 58.0.20, Metro 0.87.1
 - `@node-rs/bcrypt-darwin-arm64` 2.0.0
-- `bcrypt` 6.0.0
-- `node-gyp-build` 4.8.4
-- `node-gyp` 13.1.0 (builds the tiny addon)
+- `node-gyp` 13.1.0
 
-Tested with `expo start` and local HTTP requests. Production export and other operating systems have not been tested. The lockfile records the full dependency versions.
+Tested with `expo start` and local HTTP requests. Production export, deployment, and other operating systems have not been tested. `pnpm-lock.yaml` records the full dependency versions. Generated native binaries are ignored by Git.

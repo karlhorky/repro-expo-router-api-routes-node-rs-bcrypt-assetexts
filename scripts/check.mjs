@@ -14,12 +14,6 @@ assert.ok(asset.value.startsWith('/assets/'));
 assert.ok(asset.value.endsWith('/bcrypt.darwin-arm64.node'));
 console.log('/node-rs-asset: HTTP 200, ' + JSON.stringify(asset));
 
-const bcryptResponse = await fetch('http://localhost:8107/bcrypt');
-const bcryptBody = await bcryptResponse.text();
-assert.equal(bcryptResponse.status, 500);
-assert.ok(bcryptBody.includes('No native build was found'));
-console.log('/bcrypt: HTTP 500, No native build was found');
-
 const helloResponse = await fetch('http://localhost:8107/hello');
 const helloBody = await helloResponse.text();
 assert.equal(helloResponse.status, 500);

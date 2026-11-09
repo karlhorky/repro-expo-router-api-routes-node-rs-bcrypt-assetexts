@@ -1,0 +1,52 @@
+60: async function transformToSource({ filename, options }, assetRegistryPath, assetDataPlugins) {
+61:     options ??= options || {
+62:         platform: '',
+63:         projectRoot: ''
+64:     };
+65:     const customTransformOptions = options.customTransformOptions;
+66:     // Is bundling for webview.
+67:     const isDomComponent = options.platform === 'web' && customTransformOptions?.dom;
+68:     const useMd5Filename = customTransformOptions?.useMd5Filename;
+69:     const isExport = options.publicPath.includes('?export_path=');
+70:     const isHosted = options.platform === 'web' || customTransformOptions?.hosted && isExport;
+71:     const isReactServer = customTransformOptions?.environment === 'react-server';
+72:     const isServerEnv = isReactServer || customTransformOptions?.environment === 'node';
+73:     const absolutePath = _nodepath().default.resolve(options.projectRoot, filename);
+74:     const getClientReference = ()=>isReactServer ? _nodeurl().default.pathToFileURL(absolutePath).href : undefined;
+75:     if ((options.platform !== 'web' || // React Server DOM components should use the client reference in order to locate embedded assets.
+76:     isDomComponent) && // NOTE(EvanBacon): There may be value in simply evaluating assets on the server.
+77:     // Here, we're passing the info back to the client so the multi-resolution asset can be evaluated and downloaded.
+78:     isReactServer) {
+79:         return {
+80:             code: `module.exports = require('react-server-dom-webpack/server').createClientModuleProxy(${JSON.stringify(`./${(0, _filePath.toPosixPath)(_nodepath().default.relative(options.projectRoot, absolutePath))}`)});`,
+81:             reactClientReference: getClientReference()
+82:         };
+83:     }
+84:     const data = await (0, _getAssets.getUniversalAssetData)(absolutePath, filename, assetDataPlugins, options.platform, isDomComponent && isExport ? // relative to the `DOM_COMPONENTS_BUNDLE_DIR`.
+85:     `/assets?export_path=assets` : options.publicPath, isHosted);
+86:     if (isServerEnv || options.platform === 'web') {
+87:         const type = !data.type ? '' : `.${data.type}`;
+88:         let assetPath;
+89:         if (useMd5Filename) {
+90:             assetPath = data.hash + type;
+91:         } else if (!isExport) {
+92:             assetPath = data.httpServerLocation + '/' + data.name + type;
+93:         } else {
+94:             assetPath = data.httpServerLocation.replace(/\.\.\//g, '_') + '/' + data.name + type;
+95:         }
+96:         // If size data is known then it should be passed back to ensure the correct dimensions are used.
+97:         if (data.width != null || data.height != null) {
+98:             // React Server Component image sources cannot contain functions.
+99:             return {
+100:                 code: `module.exports = { uri: ${JSON.stringify(assetPath)}, width: ${data.width != null ? String(data.width) : 'undefined'}, height: ${data.height != null ? String(data.height) : 'undefined'}${isReactServer ? '' : ', toString() { return this.uri; }'} };`,
+101:                 reactClientReference: getClientReference()
+102:             };
+103:         }
+104:         // Use single string references outside of client-side React Native.
+105:         // module.exports = "/foo/bar.png";
+106:         return {
+107:             code: `module.exports = ${JSON.stringify(assetPath)};`,
+108:             reactClientReference: getClientReference()
+109:         };
+110:     }
+111:     const descriptor = {

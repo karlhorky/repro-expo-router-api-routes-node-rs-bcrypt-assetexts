@@ -7,11 +7,11 @@
     "start": "expo start --localhost --port 8107",
     "control": "node scripts/control.cjs",
     "check": "node scripts/check.mjs",
-    "build-addon": "node-gyp rebuild --directory native"
+    "build-addon": "node-gyp rebuild --directory native",
+    "diagnose": "node scripts/diagnose.mjs"
   },
   "dependencies": {
     "@node-rs/bcrypt-darwin-arm64": "2.0.0",
-    "bcrypt": "6.0.0",
     "expo": "58.0.17",
     "expo-constants": "58.0.13",
     "expo-font": "58.0.9",
