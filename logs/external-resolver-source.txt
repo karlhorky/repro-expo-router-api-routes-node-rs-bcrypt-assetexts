@@ -1,0 +1,30 @@
+402:         // Node.js externals support
+403:         function requestNodeExternals(context, moduleName, platform) {
+404:             const isServer = context.customResolverOptions?.environment === 'node' || context.customResolverOptions?.environment === 'react-server';
+405:             const moduleId = (0, _externals.isNodeExternal)(moduleName);
+406:             if (!moduleId) {
+407:                 return null;
+408:             }
+409:             if (// In browser runtimes, we want to either resolve a local node module by the same name, or shim the module to
+410:             // prevent crashing when Node.js built-ins are imported.
+411:             !isServer) {
+412:                 // Perform optional resolve first. If the module doesn't exist (no module in the node_modules)
+413:                 // then we can mock the file to use an empty module.
+414:                 const result = getOptionalResolver(context, platform)(moduleName);
+415:                 if (!result && platform !== 'web') {
+416:                     // Preserve previous behavior where native throws an error on node.js internals.
+417:                     return null;
+418:                 }
+419:                 return result ?? {
+420:                     // In this case, mock the file to use an empty module.
+421:                     type: 'empty'
+422:                 };
+423:             }
+424:             const contents = `module.exports=$$require_external('node:${moduleId}');`;
+425:             const virtualModuleId = `\0node:${moduleId}`;
+426:             (0, _metroVirtualModules.getMetroBundlerWithVirtualModules)(getMetroBundler()).setVirtualModule(virtualModuleId, contents);
+427:             return {
+428:                 type: 'sourceFile',
+429:                 filePath: virtualModuleId
+430:             };
+431:         },

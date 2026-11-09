@@ -1,0 +1,27 @@
+$ NATIVE_EXTERNAL_TEST=1 expo start --localhost --port 8107
+Starting project at <repro>
+Starting Metro Bundler
+
+Waiting on http://localhost:8107
+
+An update for expo is available: 58.0.17 → ~58.0.23
+9 other packages may need updating. Run npx expo install --check for details.
+Logs for your project will appear below.
+| (node:40102) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+| (Use `node --trace-warnings ...` to show where the warning was created)
+| (node:40102) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+| (Use `node --trace-warnings ...` to show where the warning was created)
+| (node:40102) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+| (Use `node --trace-warnings ...` to show where the warning was created)
+| (node:40102) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+| (Use `node --trace-warnings ...` to show where the warning was created)
+| (node:40102) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+| (Use `node --trace-warnings ...` to show where the warning was created)
+| (node:40102) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+| (Use `node --trace-warnings ...` to show where the warning was created)
+{"moduleName":"../native/build/Release/hello.node","originalResolution":"assetFiles","filename":"native/build/Release/hello.node","replacement":"Node.js require"}
+λ Bundled 16ms app/hello+api.js (1 module)
+{"moduleName":"@node-rs/bcrypt-darwin-arm64","originalResolution":"assetFiles","filename":"node_modules/.pnpm/@node-rs+bcrypt-darwin-arm64@2.0.0/node_modules/@node-rs/bcrypt-darwin-arm64/bcrypt.darwin-arm64.node","replacement":"Node.js require"}
+λ Bundled 9ms app/node-rs+api.js (1 module)
+{"moduleName":"./build/Release/hello.node","originalResolution":"assetFiles","filename":"native/build/Release/hello.node","replacement":"Node.js require"}
+λ Bundled 4ms app/hello-commonjs+api.js (1 module)

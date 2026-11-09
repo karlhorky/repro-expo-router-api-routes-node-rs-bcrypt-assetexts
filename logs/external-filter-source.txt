@@ -1,0 +1,7 @@
+86: function isNodeExternal(moduleName) {
+87:     const moduleId = moduleName.replace(/^node:/, '');
+88:     if (NODE_STDLIB_MODULES.includes(moduleId)) {
+89:         return moduleId;
+90:     }
+91:     return null;
+92: }
