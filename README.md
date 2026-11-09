@@ -24,7 +24,7 @@ pnpm check
 pnpm diagnose
 ```
 
-`pnpm check` asserts the observed failures, so passing means the problem was reproduced. `pnpm diagnose` captures the generated native asset module, compares the served and local binary hashes, invokes Expo's asset transformer directly, and verifies native loading inside the Expo API server.
+`pnpm check` asserts the observed failures, so passing means the problem was reproduced. `pnpm diagnose` captures the generated native asset module, compares the served and local binary hashes, invokes Expo's asset transformer directly, verifies native loading inside the Expo API server, and compares a CommonJS wrapper in plain Node and Metro.
 
 Configuration under test:
 
@@ -51,6 +51,7 @@ Expected: `/hello` returns `{"message":"hello from native"}` and `/node-rs` retu
 | `/node-rs` | 500 | `hashSync` is not a function |
 | `/node-rs-asset` | 200 | Imported default value is a string asset URL |
 | `/native-require` | 200 | Both addons load and execute using Node's `createRequire()` |
+| `/hello-commonjs` | 500 | The same CommonJS wrapper that works in plain Node receives the asset URL in Metro |
 
 The exact handler errors are:
 
@@ -65,6 +66,39 @@ Metro error: (0 , _nodeRsBcryptDarwinArm.hashSync) is not a function
 [logs/check.txt](logs/check.txt) records the HTTP assertions. [logs/metro.txt](logs/metro.txt) records the Metro output, with ANSI colors removed and the absolute repro directory replaced by `<repro>`.
 
 ## Diagnostics
+
+### Node and Metro use different loaders for the same CommonJS wrapper
+
+Direct ES module imports of `.node` files also fail in plain Node, with `ERR_UNKNOWN_FILE_EXTENSION`. The original direct-import routes therefore do not establish parity with Node's ES module loader.
+
+The supported Node comparison uses `native/hello-commonjs.cjs`:
+
+```js
+module.exports = require('./build/Release/hello.node');
+```
+
+The same ES module import of this wrapper succeeds in plain Node:
+
+```sh
+$ node --input-type=module --eval "import addon from './native/hello-commonjs.cjs'; console.log(addon.hello());"
+hello from native
+```
+
+Node's installed CommonJS `.node` extension handler calls `process.dlopen(module, filename)`. [logs/node-loader.txt](logs/node-loader.txt) captures both Node tests and the installed handler's source.
+
+In the API Route `/hello-commonjs`, Metro bundles that wrapper as:
+
+```js
+__d(function (global, require, _$$_IMPORT_DEFAULT, _$$_IMPORT_ALL, module, exports, _dependencyMap) {
+  module.exports = require(_dependencyMap[0], "./build/Release/hello.node");
+},1,[2],"native/hello-commonjs.cjs");
+```
+
+Here `require` is the bundle's dependency loader, and its dependency is the generated asset module exporting a URL. It never reaches Node's `.node` extension handler. The route returns HTTP 500 with `addon.default.hello is not a function`.
+
+[logs/commonjs-generated-module.txt](logs/commonjs-generated-module.txt) captures the generated wrapper, and [logs/commonjs-metro.txt](logs/commonjs-metro.txt) captures the HTTP request's server error. `pnpm diagnose` asserts the plain Node success, direct ESM failure, and bundled wrapper failure.
+
+This explains why adding `assetExts` does not reproduce Node's native loading behavior: it selects the asset pipeline, which creates a JavaScript module, rather than delegating the dependency to Node's native loader. The transformer line below identifies where the URL is generated, but does not by itself establish that Expo's asset handling is defective.
 
 ### 1. The binary becomes a URL during asset transformation
 

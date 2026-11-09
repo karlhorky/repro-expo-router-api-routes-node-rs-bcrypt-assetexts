@@ -2,4 +2,4 @@ __d(function (global, require, _$$_IMPORT_DEFAULT, _$$_IMPORT_ALL, module, expor
   "use strict";
 
   module.exports = "/assets/?unstable_path=.%2Fnative%2Fbuild%2FRelease/hello.node";
-},4,[],"native/build/Release/hello.node");
+},2,[],"native/build/Release/hello.node");

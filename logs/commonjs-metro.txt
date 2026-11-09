@@ -1,0 +1,59 @@
+$ expo start --localhost --port 8107
+Starting project at <repro>
+Starting Metro Bundler
+
+Waiting on http://localhost:8107
+
+Logs for your project will appear below.
+| (node:39121) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+| (Use `node --trace-warnings ...` to show where the warning was created)
+| (node:39121) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+| (Use `node --trace-warnings ...` to show where the warning was created)
+| (node:39121) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+| (Use `node --trace-warnings ...` to show where the warning was created)
+| (node:39121) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+| (Use `node --trace-warnings ...` to show where the warning was created)
+| (node:39121) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+| (Use `node --trace-warnings ...` to show where the warning was created)
+| (node:39121) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+| (Use `node --trace-warnings ...` to show where the warning was created)
+λ Bundled 33ms app/hello-commonjs+api.js (1 module)
+
+Metro error: addon.default.hello is not a function
+
+Code: hello-commonjs+api.js
+  2 |
+  3 | export function GET() {
+> 4 |   return Response.json({ message: addon.hello() });
+    |                                         ^
+  5 | }
+  6 |
+Call Stack
+  GET (app/hello-commonjs+api.js:4:41)
+  respondAPI (node_modules/.pnpm/expo-server@58.0.6/node_modules/expo-server/build/cjs/vendor/abstract.js:245:32)
+  requestHandler (node_modules/.pnpm/expo-server@58.0.6/node_modules/expo-server/build/cjs/vendor/abstract.js:132:26)
+  async (node_modules/.pnpm/expo-server@58.0.6/node_modules/expo-server/build/cjs/runtime/index.js:70:56)
+  async requestHandler (node_modules/.pnpm/expo-server@58.0.6/node_modules/expo-server/build/cjs/vendor/http.js:56:20)
+  async (node_modules/.pnpm/expo-server@58.0.6/node_modules/expo-server/build/cjs/vendor/http.js:75:30)
+λ Bundled 8ms app/hello+api.js (1 module)
+λ Bundled 5ms app/hello-asset+api.js (1 module)
+λ Bundled 3ms app/native-require+api.js (1 module)
+λ Bundled 1ms app/hello-commonjs+api.js (1 module)
+
+Metro error: addon.default.hello is not a function
+
+Code: hello-commonjs+api.js
+  2 |
+  3 | export function GET() {
+> 4 |   return Response.json({ message: addon.hello() });
+    |                                         ^
+  5 | }
+  6 |
+Call Stack
+  GET (app/hello-commonjs+api.js:4:41)
+  respondAPI (node_modules/.pnpm/expo-server@58.0.6/node_modules/expo-server/build/cjs/vendor/abstract.js:245:32)
+  requestHandler (node_modules/.pnpm/expo-server@58.0.6/node_modules/expo-server/build/cjs/vendor/abstract.js:132:26)
+  async (node_modules/.pnpm/expo-server@58.0.6/node_modules/expo-server/build/cjs/runtime/index.js:70:56)
+  async requestHandler (node_modules/.pnpm/expo-server@58.0.6/node_modules/expo-server/build/cjs/vendor/http.js:56:20)
+  async (node_modules/.pnpm/expo-server@58.0.6/node_modules/expo-server/build/cjs/vendor/http.js:75:30)
+λ Bundled 16ms app/hello-commonjs+api.js (1 module)

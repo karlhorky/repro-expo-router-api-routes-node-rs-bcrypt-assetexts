@@ -3,11 +3,14 @@ __d(function (global, require, _$$_IMPORT_DEFAULT, _$$_IMPORT_ALL, module, expor
   "use strict";
 
   module.exports = "/assets/?unstable_path=.%2Fnative%2Fbuild%2FRelease/hello.node";
-},4,[],"native/build/Release/hello.node");
+},2,[],"native/build/Release/hello.node");
 Asset HTTP status: 200
 Served SHA-256: befcd80926944d91084e6ae4170dc9a8f927dcaaaf0b4effd631dbb56daafe4f
 Local SHA-256:  befcd80926944d91084e6ae4170dc9a8f927dcaaaf0b4effd631dbb56daafe4f
-/native-require: HTTP 200, {"message":"hello from native","hash":"$2b$04$J8a4fC9SK/ZSKK6agvcLruO/Pzz68KO4oiRbO.CuUNxComwFizs6W","verified":true}
+/native-require: HTTP 200, {"message":"hello from native","hash":"$2b$04$qa5Ec1p/xvsx7nnbHB2R7uXBCC6IgDnr57zzXnzudSoZL5OYJYx1.","verified":true}
 assetExts includes node: true
 sourceExts includes node: false
 Expo asset transformer with platform=web, environment=node: module.exports = "/assets/?unstable_path=.%2Fnative%2Fbuild%2FRelease/hello.node";
+Plain Node direct ESM import: ERR_UNKNOWN_FILE_EXTENSION
+Plain Node import of CommonJS wrapper: hello from native
+/hello-commonjs: HTTP 500, addon.default.hello is not a function

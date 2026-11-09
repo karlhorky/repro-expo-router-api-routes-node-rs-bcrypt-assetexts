@@ -1,0 +1,29 @@
+$ node --input-type=module --eval "import { hello } from './native/build/Release/hello.node'; console.log(hello());"
+node:internal/modules/esm/get_format:185
+  throw new ERR_UNKNOWN_FILE_EXTENSION(ext, filepath);
+        ^
+
+TypeError [ERR_UNKNOWN_FILE_EXTENSION]: Unknown file extension ".node" for <repro>/native/build/Release/hello.node
+    at Object.getFileProtocolModuleFormat [as file:] (node:internal/modules/esm/get_format:185:9)
+    at defaultGetFormat (node:internal/modules/esm/get_format:211:36)
+    at defaultLoadSync (node:internal/modules/esm/load:158:16)
+    at #loadAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:795:12)
+    at #loadSync (node:internal/modules/esm/loader:815:49)
+    at ModuleLoader.load (node:internal/modules/esm/loader:780:26)
+    at ModuleLoader.loadAndTranslate (node:internal/modules/esm/loader:526:31)
+    at #getOrCreateModuleJobAfterResolve (node:internal/modules/esm/loader:571:36)
+    at afterResolve (node:internal/modules/esm/loader:624:52)
+    at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:630:12) {
+  code: 'ERR_UNKNOWN_FILE_EXTENSION'
+}
+
+Node.js v24.13.0
+
+$ node --input-type=module --eval "import addon from './native/hello-commonjs.cjs'; console.log(addon.hello());"
+hello from native
+
+Node's installed CommonJS .node extension handler:
+function(module, filename) {
+  // Be aware this doesn't use `content`
+  return process.dlopen(module, path.toNamespacedPath(filename));
+}
